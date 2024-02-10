@@ -5,6 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
+# Venv
+py3.10/
 
 # Distribution / packaging
 .Python
