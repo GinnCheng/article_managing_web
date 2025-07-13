@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: #000;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 20px;
+        }
+        .container {
+            padding: 30px;
+        }
+        h1 {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        textarea {
+            height: 120px;
+        }
+        .image-preview {
+            margin-top: 20px;
+        }
+        .image-preview img {
+            max-width: 300px;
+            max-height: 300px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #000;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">Article CMS</div>
+    <div class="container">
+        <h1>Edit Post</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <label for="title"><h2>Title</h2></label>
+            <input type="text" name="title" value="{{ article.title if article else '' }}">
+
+            <label for="author"><h2>Author</h2></label>
+            <input type="text" name="author" value="{{ article.author if article else '' }}">
+
+            <label for="body"><h2>Body</h2></label>
+            <textarea name="body">{{ article.body if article else '' }}</textarea>
+
+            <label for="image"><h2>Image</h2></label>
+            <div class="image-preview">
+                {% if image_url %}
+                    <img src="{{ image_url }}" alt="Uploaded Image">
+                {% endif %}
+            </div>
+            <input type="file" name="image" id="image">
+            <br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+</html>

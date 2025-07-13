@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            line-height: 1.6;
+        }
+        .article-image img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .author {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .body {
+            white-space: pre-line;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <div class="author">By {{ author }}</div>
+
+    {% if image_url %}
+        <div class="article-image">
+            <img src="{{ image_url }}" alt="Article Image">
+        </div>
+    {% endif %}
+
+    <div class="body">{{ body }}</div>
+</body>
+</html>

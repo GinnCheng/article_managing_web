@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ article.title }}</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            line-height: 1.6;
+        }
+        img {
+            max-width: 100%;
+            margin: 20px 0;
+        }
+        .actions {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="actions">
+        <a href="{{ url_for('list_articles') }}">← Back to List</a> |
+        <a href="{{ url_for('edit_post', article_id=article.id) }}">Edit</a>
+        <form method="POST" action="{{ url_for('delete_article', article_id=article.id) }}" onsubmit="return confirm('Are you sure you want to delete this article?');">
+    <button type="submit" style="color:red;">Delete</button>
+</form>
+    </div>
+    <h1>{{ article.title }}</h1>
+    <p><em>By {{ article.author }}</em></p>
+    {% if article.image_url %}
+        <img src="{{ article.image_url }}" alt="Article image">
+    {% endif %}
+    <p style="white-space: pre-line;">{{ article.body }}</p>
+</body>
+</html>
