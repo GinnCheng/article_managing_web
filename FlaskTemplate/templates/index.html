@@ -1,6 +1,14 @@
 {% extends "layout.html" %}
-
 {% block content %}
+
+{% if user %}
+  <div class="alert alert-success">
+    Welcome, {{ user.get('name', user.get('preferred_username')) }}!
+    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Log out</a>
+  </div>
+{% else %}
+  <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Sign in with Microsoft</a>
+{% endif %}
 
 <div class="jumbotron">
     <h1>Flask</h1>
