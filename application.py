@@ -1,33 +1,35 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+from azure.storage.blob import BlobServiceClient
 from werkzeug.utils import secure_filename
 import os
 import uuid
-import json
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-ARTICLES_FILE = 'articles.json'
 
-# Ensure folders exist
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# Load configuration from environment variables
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+AZURE_BLOB_CONNECTION_STRING = os.getenv('AZURE_BLOB_CONNECTION_STRING')
+AZURE_BLOB_CONTAINER = os.getenv('AZURE_BLOB_CONTAINER')
 
-# Utility functions
-def load_articles():
-    if os.path.exists(ARTICLES_FILE):
-        with open(ARTICLES_FILE, 'r') as f:
-            return json.load(f)
-    return {}
+# Initialize extensions
+db = SQLAlchemy(app)
+blob_service_client = BlobServiceClient.from_connection_string(AZURE_BLOB_CONNECTION_STRING)
+container_client = blob_service_client.get_container_client(AZURE_BLOB_CONTAINER)
 
-def save_articles(articles):
-    with open(ARTICLES_FILE, 'w') as f:
-        json.dump(articles, f, indent=4)
+# Define the Article model
+class Article(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    title = db.Column(db.String(255))
+    author = db.Column(db.String(255))
+    body = db.Column(db.Text)
+    image_url = db.Column(db.String)
 
-# Routes
 @app.route('/')
 @app.route('/articles')
 def list_articles():
-    articles = load_articles()
+    articles = Article.query.all()
     return render_template('article_list.html', articles=articles)
 
 @app.route('/new', methods=['GET', 'POST'])
@@ -40,81 +42,72 @@ def new_post():
 
         image_url = None
         if image and image.filename != '':
-            filename = secure_filename(image.filename)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            image.save(image_path)
-            image_url = url_for('static', filename=f'uploads/{filename}')
+            filename = f"{uuid.uuid4()}-{secure_filename(image.filename)}"
+            blob_client = container_client.get_blob_client(filename)
+            blob_client.upload_blob(image, overwrite=True)
+            image_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{AZURE_BLOB_CONTAINER}/{filename}"
 
-        articles = load_articles()
-        article_id = str(uuid.uuid4())
-        articles[article_id] = {
-            'id': article_id,
-            'title': title,
-            'author': author,
-            'body': body,
-            'image_url': image_url
-        }
-        save_articles(articles)
-        return redirect(url_for('view_article', article_id=article_id))
-    return render_template('edit_post.html')
+        article = Article(
+            id=str(uuid.uuid4()),
+            title=title,
+            author=author,
+            body=body,
+            image_url=image_url
+        )
+        db.session.add(article)
+        db.session.commit()
+
+        return redirect(url_for('view_article', article_id=article.id))
+
+    return render_template('edit_post.html', article=None)
 
 @app.route('/edit/<article_id>', methods=['GET', 'POST'])
 def edit_post(article_id):
-    articles = load_articles()
-    article = articles.get(article_id)
+    article = Article.query.get(article_id)
     if not article:
         return "Article not found", 404
 
     if request.method == 'POST':
-        title = request.form['title']
-        author = request.form['author']
-        body = request.form['body']
+        article.title = request.form['title']
+        article.author = request.form['author']
+        article.body = request.form['body']
         image = request.files.get('image')
 
         if image and image.filename != '':
-            filename = secure_filename(image.filename)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            image.save(image_path)
-            article['image_url'] = url_for('static', filename=f'uploads/{filename}')
+            filename = f"{uuid.uuid4()}-{secure_filename(image.filename)}"
+            blob_client = container_client.get_blob_client(filename)
+            blob_client.upload_blob(image, overwrite=True)
+            article.image_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{AZURE_BLOB_CONTAINER}/{filename}"
 
-        article.update({
-            'title': title,
-            'author': author,
-            'body': body
-        })
-
-        articles[article_id] = article
-        save_articles(articles)
-        return redirect(url_for('view_article', article_id=article_id))
+        db.session.commit()
+        return redirect(url_for('view_article', article_id=article.id))
 
     return render_template('edit_post.html', article=article)
 
 @app.route('/article/<article_id>')
 def view_article(article_id):
-    articles = load_articles()
-    article = articles.get(article_id)
+    article = Article.query.get(article_id)
     if not article:
         return "Article not found", 404
     return render_template('article_view.html', article=article)
 
-
 @app.route('/delete/<article_id>', methods=['POST'])
 def delete_article(article_id):
-    articles = load_articles()
-    article = articles.get(article_id)
+    article = Article.query.get(article_id)
     if not article:
         return "Article not found", 404
 
-    # Optional: Delete associated image file
-    if article.get('image_url'):
-        image_path = article['image_url'].replace('/static/', 'static/')
-        if os.path.exists(image_path):
-            os.remove(image_path)
+    # Optionally delete blob file
+    if article.image_url:
+        blob_name = article.image_url.split('/')[-1]
+        try:
+            container_client.delete_blob(blob_name)
+        except Exception:
+            pass
 
-    del articles[article_id]
-    save_articles(articles)
+    db.session.delete(article)
+    db.session.commit()
     return redirect(url_for('list_articles'))
-
 
 if __name__ == '__main__':
     app.run(debug=True)

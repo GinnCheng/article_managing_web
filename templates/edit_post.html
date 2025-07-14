@@ -74,8 +74,8 @@
 
             <label for="image"><h2>Image</h2></label>
             <div class="image-preview">
-                {% if image_url %}
-                    <img src="{{ image_url }}" alt="Uploaded Image">
+                {% if article and article.image_url %}
+                    <img src="{{ article.image_url }}" alt="Uploaded Image">
                 {% endif %}
             </div>
             <input type="file" name="image" id="image">
