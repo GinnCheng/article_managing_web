@@ -5,6 +5,10 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 
+from dotenv import load_dotenv
+load_dotenv()
+
+
 app = Flask(__name__)
 
 # Load configuration from environment variables
@@ -25,6 +29,7 @@ class Article(db.Model):
     author = db.Column(db.String(255))
     body = db.Column(db.Text)
     image_url = db.Column(db.String)
+
 
 @app.route('/')
 @app.route('/articles')
