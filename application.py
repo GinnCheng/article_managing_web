@@ -120,14 +120,8 @@ def delete_article(article_id):
 
 @app.route('/logout')
 def logout():
-    session.clear()  # optional, in case you're storing anything locally
-
-    aad_logout_url = (
-        "https://login.microsoftonline.com/common/oauth2/v2.0/logout"
-        "?post_logout_redirect_uri=https://udacitycms-ghesdmddfxbxgjcf.australiaeast-01.azurewebsites.net"
-    )
-
-    return redirect(aad_logout_url)
+    session.clear()
+    return redirect("https://login.microsoftonline.com/common/oauth2/v2.0/logout?post_logout_redirect_uri=https://udacitycms-ghesdmddfxbxgjcf.australiaeast-01.azurewebsites.net")
 
 
 if __name__ == '__main__':
