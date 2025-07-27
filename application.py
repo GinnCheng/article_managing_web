@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from azure.storage.blob import BlobServiceClient
 from werkzeug.utils import secure_filename
@@ -108,6 +108,19 @@ def delete_article(article_id):
     db.session.delete(article)
     db.session.commit()
     return redirect(url_for('list_articles'))
+
+
+@app.route('/logout')
+def logout():
+    session.clear()  # optional, in case you're storing anything locally
+
+    aad_logout_url = (
+        "https://login.microsoftonline.com/common/oauth2/v2.0/logout"
+        "?post_logout_redirect_uri=https://udacitycms-ghesdmddfxbxgjcf.australiaeast-01.azurewebsites.net"
+    )
+
+    return redirect(aad_logout_url)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
