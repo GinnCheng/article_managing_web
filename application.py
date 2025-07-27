@@ -5,13 +5,20 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 
+from dotenv import load_dotenv
+load_dotenv()
+
+
 app = Flask(__name__)
 
 # Load configuration from environment variables
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-AZURE_BLOB_CONNECTION_STRING = os.getenv('AZURE_BLOB_CONNECTION_STRING')
-AZURE_BLOB_CONTAINER = os.getenv('AZURE_BLOB_CONTAINER')
+# AZURE_BLOB_CONNECTION_STRING = os.getenv('AZURE_BLOB_CONNECTION_STRING')
+# AZURE_BLOB_CONTAINER = os.getenv('AZURE_BLOB_CONTAINER')
+
+AZURE_BLOB_CONNECTION_STRING = os.getenv('BLOB_CONNECTION_STRING')
+AZURE_BLOB_CONTAINER = os.getenv('BLOB_CONTAINER')
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -25,6 +32,7 @@ class Article(db.Model):
     author = db.Column(db.String(255))
     body = db.Column(db.Text)
     image_url = db.Column(db.String)
+
 
 @app.route('/')
 @app.route('/articles')
